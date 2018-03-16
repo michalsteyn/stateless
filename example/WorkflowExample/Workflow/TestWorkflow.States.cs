@@ -16,16 +16,23 @@ namespace WorkflowExample.Workflow
 
             Configure(States.ScanningBoardPass)
                 .RunActivityAsync<States, Triggers, ScanBoardPassActivity>("Scan BoardPass")
+                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent == UserEvents.Cancel, "Cancel")
                 .OnCompletion<States, Triggers, ScanBoardPassActivity>(States.StartDomesticWorkflow, activity => activity.IsDomestic, "Domestic Passenger")
                 .OnCompletion<States, Triggers, ScanBoardPassActivity>(States.StartIntWorkFlow, activity => !activity.IsDomestic, "International Passenger");
 
             Configure(States.StartIntWorkFlow)
-                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent == UserEvents.Cancel, "Cancel")
+                .PermitIf(_userEventsTrigger, States.CompleteBooking, userEvent => userEvent == UserEvents.Yes, "Yes")
+                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent != UserEvents.Yes, "Cancel")
                 .RunActivityAsync<States, Triggers, StartIntWorkflowActivity>();
 
             Configure(States.StartDomesticWorkflow)
-                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent == UserEvents.Cancel, "Cancel")
+                .PermitIf(_userEventsTrigger, States.CompleteBooking, userEvent => userEvent == UserEvents.Yes, "Yes")
+                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent != UserEvents.Yes, "Cancel")
                 .RunActivityAsync<States, Triggers, StartDomesticWorkflowActivity>();
+
+            Configure(States.CompleteBooking)
+                .RunActivityAsync<States, Triggers, CompletingBookingActivity>()
+                .OnCompletion(States.Goodbye);
 
             Configure(States.Goodbye)
                 .RunActivityAsync<States, Triggers, GoodbyeScreenActivity>()

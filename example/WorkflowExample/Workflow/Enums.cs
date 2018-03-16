@@ -6,6 +6,7 @@
         ScanningBoardPass,
         StartIntWorkFlow,
         StartDomesticWorkflow,
+        CompleteBooking,
         Goodbye
     }
 

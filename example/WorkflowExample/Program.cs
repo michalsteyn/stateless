@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using NLog;
 using Shields.GraphViz.Components;
 using Shields.GraphViz.Models;
 using Shields.GraphViz.Services;
@@ -13,6 +14,8 @@ namespace WorkflowExample
 {
     class Program
     {
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
         static void Main()
         {
             //Used for DI of Activities
@@ -23,13 +26,13 @@ namespace WorkflowExample
                 var workflow = new TestWorkflow(factory);
                 CreateGraph(workflow, true);
 
-                Console.WriteLine("Test Workflow Created");
+                Log.Debug("Test Workflow Created");
                 workflow.FireAndForget(Triggers.Reset);
 
                 string userInput;
                 do
                 {
-                    Console.WriteLine("Enter a User Input: Yes, No, Cancel, [Exit to terminate]");
+                    Log.Info("Enter a User Input: Yes, No, Cancel, [Exit to terminate]");
                     userInput = Console.ReadLine();
                     if (Enum.TryParse(userInput, out UserEvents userEventTrigger))
                     {
@@ -40,8 +43,8 @@ namespace WorkflowExample
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Exception: " + ex.Message);
-                Console.WriteLine("Press any key to continue...");
+                Log.Error(ex, "Exception: " + ex.Message);
+                Log.Info("Press any key to continue...");
                 Console.ReadKey(true);
             }
         }
@@ -70,7 +73,7 @@ namespace WorkflowExample
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error Creating State Diagram: {e.Message}");
+                Log.Error(e, $"Error Creating State Diagram: {e.Message}");
             }
         }
     }    

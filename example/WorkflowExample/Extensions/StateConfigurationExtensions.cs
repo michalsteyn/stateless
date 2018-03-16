@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Stateless;
 
 namespace WorkflowExample.Extensions
@@ -12,7 +13,7 @@ namespace WorkflowExample.Extensions
             if (!(config.Machine is Workflow<TState, TTrigger> workflow))
                 throw new Exception("Only supported on Workflow Engine");
 
-            config.OnEntryAsync(async trigger => await activity.RunAsync(workflow, trigger));
+            config.OnEntryAsync(async transition => await workflow.RunActivity(activity, transition));
             return config;
         }
 
@@ -23,11 +24,9 @@ namespace WorkflowExample.Extensions
             if(!(config.Machine is Workflow<TState, TTrigger> workflow))
                 throw new Exception("Only supported on Workflow Engine");
 
-            config.OnEntryAsync(async trigger =>
+            config.OnEntryAsync(async transition =>
             {
-                var activity = workflow.ActivityFactory.GetActivity<TActivity>() as BaseActivity<TState, TTrigger>;
-                if(activity == null) throw new Exception($"Error activating Activity: {typeof(TActivity)}");
-                await activity.RunAsync(workflow, trigger);                
+                await workflow.RunActivity<TActivity>(transition);
             }, description);
             
             return config;

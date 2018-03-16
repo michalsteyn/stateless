@@ -10,7 +10,7 @@ namespace WorkflowExample.Workflow
     {
         protected override void ErrorHandler(object sender, Exception ex, string message)
         {
-            Console.WriteLine("Error in Test Workflow");
+            Log.Error(ex, "Error in Test Workflow");
             base.ErrorHandler(sender, ex, message);
             Fire(Triggers.Reset);
         }

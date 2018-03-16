@@ -21,11 +21,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="NLog" Version="4.4.13" />
     <PackageReference Include="Shields.GraphViz" Version="1.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stateless\Stateless.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
