@@ -17,5 +17,7 @@ namespace WorkflowExample.Activities
             await Task.Delay(2000);
             Log.Info("Booking Complete!");
         }
+
+        public CompletingBookingActivity() : base(States.CompleteBooking) {  }
     }
 }

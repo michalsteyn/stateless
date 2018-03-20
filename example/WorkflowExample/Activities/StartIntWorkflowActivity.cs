@@ -15,5 +15,7 @@ namespace WorkflowExample.Activities
         {
             Log.Info("International Traveler Detected, press Yes to complete booking");
         }
+
+        public StartIntWorkflowActivity() : base(States.StartIntWorkFlow) {  }
     }
 }

@@ -18,7 +18,7 @@ namespace WorkflowExample.Activities
 
         public bool IsDomestic { get; set; }
 
-        public ScanBoardPassActivity(BoardPassScanner boardPassScanner)
+        public ScanBoardPassActivity(BoardPassScanner boardPassScanner) : base(States.ScanningBoardPass)
         {
             _boardPassScanner = boardPassScanner;
         }        

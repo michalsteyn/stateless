@@ -7,9 +7,16 @@ namespace WorkflowExample
 {
     public abstract class BaseActivity<TState, TTrigger>
     {
+        protected BaseActivity(TState state)
+        {
+            State = state;
+        }
+
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
         public bool HasError { get; set; }
+
+        public TState State { get; }
 
         public bool FireActivityCompletedTrigger { get; set; } = true;
 

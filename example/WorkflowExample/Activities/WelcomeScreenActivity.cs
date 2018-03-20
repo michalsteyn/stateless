@@ -15,5 +15,7 @@ namespace WorkflowExample.Activities
         {
             Log.Info("Welcome, Please press Yes to scan your boardpass...");
         }
+
+        public WelcomeScreenActivity() : base(States.Welcome) {  }
     }
 }

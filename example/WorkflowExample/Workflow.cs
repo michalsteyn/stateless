@@ -123,33 +123,42 @@ namespace WorkflowExample
             CancellationTokenSource?.Cancel();
         }
 
-        public Workflow<TState, TTrigger> RunActivityAsync(TState state, BaseActivity<TState, TTrigger> activity, string description = null)
+        public Workflow<TState, TTrigger> RunActivityAsync(BaseActivity<TState, TTrigger> activity, string description = null)
         {
-            ConfigureState(state).OnEntryAsync(async transition => await RunActivity(activity, transition));
+            ConfigureState(activity.State)
+                .OnEntryAsync(async transition => await RunActivity(activity, transition));
+
             return this;
         }
 
-        public Workflow<TState, TTrigger> RunActivityAsync<TActivity>(TState state, string description = null)
+        public Workflow<TState, TTrigger> RunActivityAsync<TActivity>(string description = null) where TActivity: BaseActivity<TState, TTrigger>
         {
-            ConfigureState(state).OnEntryAsync(async transition =>
+            var activity = ActivityFactory.GetActivity<TActivity>();
+
+            ConfigureState(activity.State).OnEntryAsync(async transition =>
             {
                 await RunActivity<TActivity>(transition);
             }, description);
             return this;
         }
 
-        public Workflow<TState, TTrigger> Then<TActivity>(TState newState, Func<TActivity, bool> condition,
-            string description = null) where TActivity : class
+        public Workflow<TState, TTrigger> Transition<TActivity1, TActivity2>(Func<TActivity1, bool> condition,
+            string description = null) 
+            where TActivity1 : BaseActivity<TState, TTrigger>
+            where TActivity2: BaseActivity<TState, TTrigger>
         {
+            var newState = ActivityFactory.GetActivity<TActivity2>().State;
+
             _currentStateConfiguration.PermitIf(CompletedActivityTrigger, newState, baseActivity =>
             {
-                var a = baseActivity as TActivity;
+                var a = baseActivity as TActivity1;
                 return condition(a);
             }, description);
+
             return this;
         }
 
-        public Workflow<TState, TTrigger> Then(TState newState, string description = null)
+        public Workflow<TState, TTrigger> Transition(TState newState, string description = null)
         {
             _currentStateConfiguration.PermitIf(CompletedActivityTrigger, newState, activity => true, description);
             return this;
@@ -163,20 +172,21 @@ namespace WorkflowExample
 
         public StateMachineInfo GetInfo() => _stateMachine.GetInfo();
 
-        public Workflow<TState, TTrigger> ThenOn(TTrigger trigger, TState newState)
+        public Workflow<TState, TTrigger> TransitionOn(TTrigger trigger, TState newState)
         {
             _currentStateConfiguration.PermitIf(trigger, newState);
             return this;
         }
 
-        public Workflow<TState, TTrigger> ThenOn<T>(StateMachine<TState, TTrigger>.TriggerWithParameters<T> trigger, 
-            TState newState, Func<T, bool> guard, string guardDescription = null)
+        public Workflow<TState, TTrigger> TransitionOn<TArg, TActivity>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, 
+            Func<TArg, bool> guard, string guardDescription = null) where TActivity: BaseActivity<TState, TTrigger>
         {
+            var newState = ActivityFactory.GetActivity<TActivity>().State;
             _currentStateConfiguration.PermitIf(trigger, newState, guard, guardDescription);
             return this;
         }
 
-        public Workflow<TState, TTrigger> RepeatOn<T>(StateMachine<TState, TTrigger>.TriggerWithParameters<T> trigger, Func<T, bool> guard,
+        public Workflow<TState, TTrigger> RepeatOn<TArg>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, Func<TArg, bool> guard,
             string guardDescription = null)
         {
             _currentStateConfiguration.PermitReentryIf(trigger, guard, guardDescription);

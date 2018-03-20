@@ -9,7 +9,7 @@ namespace WorkflowExample.Workflow
         {
             eventAggregator.Subscribe(this);
             InitTriggers();
-            InitStates();
+            InitSteps();
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using Stateless;
@@ -16,5 +15,7 @@ namespace WorkflowExample.Activities
         {
             Log.Info("Have a good day");
         }
+
+        public GoodbyeScreenActivity() : base(States.Goodbye) {  }
     }
 }

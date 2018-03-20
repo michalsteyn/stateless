@@ -15,5 +15,8 @@ namespace WorkflowExample.Activities
         {
             Log.Info("Domestic Traveler Detected, press Yes to complete booking");
         }
+
+        public StartDomesticWorkflowActivity() : base(States.StartDomesticWorkflow) { }
+
     }
 }
