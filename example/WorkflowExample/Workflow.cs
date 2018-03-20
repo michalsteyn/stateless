@@ -142,7 +142,7 @@ namespace WorkflowExample
             return this;
         }
 
-        public Workflow<TState, TTrigger> Transition<TFrom, TTo>(Func<TFrom, bool> condition,
+        public Workflow<TState, TTrigger> When<TFrom, TTo>(Func<TFrom, bool> condition,
             string description = null) 
             where TFrom : BaseActivity<TState, TTrigger>
             where TTo: BaseActivity<TState, TTrigger>
@@ -158,7 +158,7 @@ namespace WorkflowExample
             return this;
         }
 
-        public Workflow<TState, TTrigger> Transition<TActivity>(string description = null) where TActivity: BaseActivity<TState, TTrigger>
+        public Workflow<TState, TTrigger> Then<TActivity>(string description = null) where TActivity: BaseActivity<TState, TTrigger>
         {
             var newState = ActivityFactory.GetActivity<TActivity>().State;
             _currentStateConfiguration.PermitIf(CompletedActivityTrigger, newState, activity => true, description);
@@ -173,13 +173,13 @@ namespace WorkflowExample
 
         public StateMachineInfo GetInfo() => _stateMachine.GetInfo();
 
-        public Workflow<TState, TTrigger> TransitionOn(TTrigger trigger, TState newState)
+        public Workflow<TState, TTrigger> On(TTrigger trigger, TState newState)
         {
             _currentStateConfiguration.PermitIf(trigger, newState);
             return this;
         }
 
-        public Workflow<TState, TTrigger> TransitionOn<TArg, TActivity>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, 
+        public Workflow<TState, TTrigger> On<TArg, TActivity>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, 
             Func<TArg, bool> guard, string guardDescription = null) where TActivity: BaseActivity<TState, TTrigger>
         {
             var newState = ActivityFactory.GetActivity<TActivity>().State;
