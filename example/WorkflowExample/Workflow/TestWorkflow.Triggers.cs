@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Caliburn.Micro;
 using NLog;
+using WorkflowExample.Events;
+using LogManager = NLog.LogManager;
 
 namespace WorkflowExample.Workflow
 {
-    public partial class TestWorkflow
+    public partial class TestWorkflow: IHandle<UserEventArgs>
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
@@ -24,6 +26,11 @@ namespace WorkflowExample.Workflow
         {
             if(userEvent == UserEvents.Cancel) CancelWorkflow();
             FireAndForget(_userEventsTrigger, userEvent);
+        }
+
+        public void Handle(UserEventArgs message)
+        {
+            TriggerUserEvent(message.UserEvent);
         }
     }
 }

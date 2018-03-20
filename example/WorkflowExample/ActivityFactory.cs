@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Autofac;
 
 namespace WorkflowExample
 {    
@@ -10,9 +10,16 @@ namespace WorkflowExample
 
     public class ActivityFactory : IActivityFactory
     {
+        private readonly ILifetimeScope _container;
+
+        public ActivityFactory(ILifetimeScope container)
+        {
+            _container = container;
+        }
+
         public TActivity GetActivity<TActivity>()
         {
-            return Activator.CreateInstance<TActivity>();
+            return _container.Resolve<TActivity>();
         }
     }
 }

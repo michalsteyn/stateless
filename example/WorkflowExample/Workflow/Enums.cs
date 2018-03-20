@@ -17,11 +17,4 @@
         BoardPassScanned,
         ActivityCompleted
     }
-
-    public enum UserEvents
-    {
-        Yes,
-        No,
-        Cancel
-    }
 }
