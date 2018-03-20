@@ -1,5 +1,6 @@
 ﻿using Caliburn.Micro;
 using NLog;
+using Stateless;
 using WorkflowExample.Events;
 using LogManager = NLog.LogManager;
 
@@ -9,14 +10,14 @@ namespace WorkflowExample.Workflow
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        private TriggerWithParameters<UserEvents> _userEventsTrigger;
+        private StateMachine<States,Triggers>.TriggerWithParameters<UserEvents> _userEventsTrigger;
 
         private void InitTriggers()
         {
             OnUnhandledTrigger((states, triggers) =>
             {
-                if (triggers == Triggers.ActivityCompleted) return;
-                Log.Warn($"...Invalid Trigger: {triggers} in State: {states}");
+                if (triggers != Triggers.ActivityCompleted)
+                    Log.Warn($"...Invalid Trigger: {triggers} in State: {states}");
             });
 
             _userEventsTrigger = SetTriggerParameters<UserEvents>(Triggers.UserEvent);

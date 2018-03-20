@@ -84,11 +84,8 @@ namespace WorkflowExample
                 var renderer = new Renderer(@"C:\ProgramData\chocolatey\bin\");
                 using (Stream file = File.Create("graph.png"))
                 {
-                    renderer.RunAsync(
-                        graph, file,
-                        RendererLayouts.Dot,
-                        RendererFormats.Png,
-                        CancellationToken.None).GetAwaiter().GetResult();
+                    renderer.RunAsync(graph, file, RendererLayouts.Dot, RendererFormats.Png, CancellationToken.None).GetAwaiter()
+                        .GetResult();
                 }
 
                 if (openImage)

@@ -9,36 +9,30 @@ namespace WorkflowExample.Workflow
         //This could be split into separate partial classes
         protected void InitStates()
         {
-            Configure(States.Welcome)
-                .PermitReentryIf(Triggers.Reset)
-                .PermitIf(_userEventsTrigger, States.ScanningBoardPass, userEvent => userEvent == UserEvents.Yes, "Yes")
-                .PermitReentryIf(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Invalid")
-                .RunActivityAsync<States, Triggers, WelcomeScreenActivity>();
+            RunActivityAsync<WelcomeScreenActivity>(States.Welcome)
+                .RepeatOn(Triggers.Reset)
+                .RepeatOn(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Invalid")
+                .ThenOn(_userEventsTrigger, States.ScanningBoardPass, userEvent => userEvent == UserEvents.Yes, "Yes");
 
-            Configure(States.ScanningBoardPass)
-                .RunActivityAsync<States, Triggers, ScanBoardPassActivity>("Scan BoardPass")
-                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent == UserEvents.Cancel, "Cancel")
-                .OnCompletion<States, Triggers, ScanBoardPassActivity>(States.StartDomesticWorkflow, activity => activity.IsDomestic, "Domestic Passenger")
-                .OnCompletion<States, Triggers, ScanBoardPassActivity>(States.StartIntWorkFlow, activity => !activity.IsDomestic, "International Passenger")
-                .OnCompletion<States, Triggers, ScanBoardPassActivity>(States.Goodbye, activity => !activity.HasValidBoardPass, "Invalid BoardPass");
+            RunActivityAsync<ScanBoardPassActivity>(States.ScanningBoardPass)
+                .Then<ScanBoardPassActivity>(States.StartDomesticWorkflow, activity => activity.IsDomestic, "Domestic Passenger")
+                .Then<ScanBoardPassActivity>(States.StartIntWorkFlow, activity => !activity.IsDomestic, "International Passenger")
+                .Then<ScanBoardPassActivity>(States.Goodbye, activity => !activity.HasValidBoardPass, "Invalid BoardPass")
+                .ThenOn(_userEventsTrigger, States.Goodbye, userEvent => userEvent == UserEvents.Cancel, "Cancel");
 
-            Configure(States.StartIntWorkFlow)
-                .PermitIf(_userEventsTrigger, States.CompleteBooking, userEvent => userEvent == UserEvents.Yes, "Yes")
-                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent != UserEvents.Yes, "Cancel")
-                .RunActivityAsync<States, Triggers, StartIntWorkflowActivity>();
+            RunActivityAsync<StartIntWorkflowActivity>(States.StartIntWorkFlow)
+                .ThenOn(_userEventsTrigger, States.CompleteBooking, userEvent => userEvent == UserEvents.Yes, "Yes")
+                .ThenOn(_userEventsTrigger, States.Goodbye, userEvent => userEvent != UserEvents.Yes, "Cancel");
 
-            Configure(States.StartDomesticWorkflow)
-                .PermitIf(_userEventsTrigger, States.CompleteBooking, userEvent => userEvent == UserEvents.Yes, "Yes")
-                .PermitIf(_userEventsTrigger, States.Goodbye, userEvent => userEvent != UserEvents.Yes, "Cancel")
-                .RunActivityAsync<States, Triggers, StartDomesticWorkflowActivity>();
+            RunActivityAsync<StartDomesticWorkflowActivity>(States.StartDomesticWorkflow)
+                .ThenOn(_userEventsTrigger, States.CompleteBooking, userEvent => userEvent == UserEvents.Yes, "Yes")
+                .ThenOn(_userEventsTrigger, States.Goodbye, userEvent => userEvent != UserEvents.Yes, "Cancel");
 
-            Configure(States.CompleteBooking)
-                .RunActivityAsync<States, Triggers, CompletingBookingActivity>()
-                .OnCompletion(States.Goodbye);
+            RunActivityAsync<CompletingBookingActivity>(States.CompleteBooking)
+                .Then(States.Goodbye);
 
-            Configure(States.Goodbye)
-                .RunActivityAsync<States, Triggers, GoodbyeScreenActivity>()
-                .OnCompletion(States.Welcome);
+            RunActivityAsync<GoodbyeScreenActivity>(States.Goodbye)
+                .Then(States.Welcome);
         }
     }
 }
