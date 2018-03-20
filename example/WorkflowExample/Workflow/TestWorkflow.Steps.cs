@@ -8,30 +8,30 @@ namespace WorkflowExample.Workflow
         //This could be split into separate partial classes
         protected void InitSteps()
         {
-            RunActivityAsync<WelcomeScreenActivity>()
+            Configure<WelcomeScreenActivity>()
                 .RepeatOn(Triggers.Reset)
                 .RepeatOn(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Invalid")
                 .TransitionOn<UserEvents, ScanBoardPassActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, "Yes");
 
-            RunActivityAsync<ScanBoardPassActivity>()
-                .Transition<ScanBoardPassActivity, StartDomesticWorkflowActivity>(activity => activity.IsDomestic, "Domestic Passenger")
-                .Transition<ScanBoardPassActivity, StartIntWorkflowActivity>(activity => !activity.IsDomestic, "International Passenger")
-                .Transition<ScanBoardPassActivity, GoodbyeScreenActivity>(activity => !activity.HasValidBoardPass, "Invalid BoardPass")
+            Configure<ScanBoardPassActivity>()
+                .Transition<ScanBoardPassActivity, StartDomesticWorkflowActivity>(scan => scan.IsDomestic, "Domestic Passenger")
+                .Transition<ScanBoardPassActivity, StartIntWorkflowActivity>(scan => !scan.IsDomestic, "International Passenger")
+                .Transition<ScanBoardPassActivity, GoodbyeScreenActivity>(scan => !scan.HasValidBoardPass, "Invalid BoardPass")
                 .TransitionOn<UserEvents, GoodbyeScreenActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Cancel, "Cancel");
 
-            RunActivityAsync<StartIntWorkflowActivity>()
+            Configure<StartIntWorkflowActivity>()
                 .TransitionOn<UserEvents, CompletingBookingActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, "Yes")
                 .TransitionOn<UserEvents, GoodbyeScreenActivity>(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Cancel");
 
-            RunActivityAsync<StartDomesticWorkflowActivity>()
+            Configure<StartDomesticWorkflowActivity>()
                 .TransitionOn<UserEvents, CompletingBookingActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, "Yes")
                 .TransitionOn<UserEvents, GoodbyeScreenActivity>(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Cancel");
 
-            RunActivityAsync<CompletingBookingActivity>()
-                .Transition(States.Goodbye);
+            Configure<CompletingBookingActivity>()
+                .Transition<GoodbyeScreenActivity>();
 
-            RunActivityAsync<GoodbyeScreenActivity>()
-                .Transition(States.Welcome);
+            Configure<GoodbyeScreenActivity>()
+                .Transition<WelcomeScreenActivity>();
         }
     }
 }
