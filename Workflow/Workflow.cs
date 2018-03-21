@@ -26,7 +26,7 @@ namespace Stateless.Workflow
         public Workflow(TState initialState, IActivityFactory activityFactory, ILogger<Workflow<TState, TTrigger>> logger, TTrigger completedTrigger)
         {
             _logger = logger;
-            Log("Creating Workflow <{0},{1}> with ID {2} and initial state {3}", typeof(TState), typeof(TTrigger), _id, initialState);
+            Log("Creating Workflow of [<{0},{1}>] with ID [{2}] and initial state [{3}]", typeof(TState), typeof(TTrigger), _id, initialState);
 
             _stateMachine = new StateMachine<TState, TTrigger>(initialState);
             _currentStateConfiguration = ConfigureState(initialState);
@@ -34,7 +34,7 @@ namespace Stateless.Workflow
             ActivityFactory = activityFactory;
             CompletedTrigger = completedTrigger;
             CompletedActivityTrigger = _stateMachine.SetTriggerParameters<BaseActivity<TState, TTrigger>>(completedTrigger);
-            _stateMachine.OnTransitioned(transition => Log("Workflow {0} moved to state {1}", _id, transition.Destination));
+            _stateMachine.OnTransitioned(transition => Log("Workflow [{0}] moved to state [{1}]", _id, transition.Destination));
         }
 
         internal async Task FireCompletedActivityAsync(BaseActivity<TState, TTrigger> activity)
@@ -86,7 +86,7 @@ namespace Stateless.Workflow
                 if (RunningActivity == null)
                     throw new Exception($"Error activating activity [{activity.GetType()}]");
 
-                Log($"Workflow {_id} running activity [{activity.Name}]");
+                Log($"Workflow [{_id}] running activity [{activity.Name}]");
                 await RunningActivity.RunAsync(this, transition, CancellationTokenSource.Token);
 
                 //Invoke OnCompletion Trigger
@@ -105,7 +105,7 @@ namespace Stateless.Workflow
             finally
             {
                 RunningActivity = null;
-                Log($"Workflow {_id} finished activity [{activity.Name}]");
+                Log($"Workflow [{_id}] finished activity [{activity.Name}]");
             }
         }
 
