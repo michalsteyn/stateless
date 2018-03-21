@@ -24,7 +24,7 @@ namespace WorkflowExample
         private readonly IDictionary<TState, StateMachine<TState, TTrigger>.StateConfiguration> _states = new ConcurrentDictionary<TState, StateMachine<TState, TTrigger>.StateConfiguration>();
         private StateMachine<TState, TTrigger>.StateConfiguration _currentStateConfiguration;
 
-        public Workflow(TState initialState, ActivityFactory activityFactory, TTrigger completedTrigger)
+        public Workflow(TState initialState, IActivityFactory activityFactory, TTrigger completedTrigger)
         {
             _stateMachine = new StateMachine<TState, TTrigger>(initialState);
             _currentStateConfiguration = ConfigureState(initialState);
