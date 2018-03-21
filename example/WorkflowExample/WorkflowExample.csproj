@@ -31,7 +31,7 @@
   <ItemGroup>
     <PackageReference Include="Autofac" Version="4.6.2" />
     <PackageReference Include="Caliburn.Micro.Core" Version="3.2.0" />
-    <PackageReference Include="NLog" Version="4.4.13" />
+    <PackageReference Include="NLog" Version="4.5.0-rc07" />
     <PackageReference Include="Shields.GraphViz" Version="1.0.2" />
   </ItemGroup>
 
