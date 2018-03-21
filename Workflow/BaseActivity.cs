@@ -1,7 +1,6 @@
-﻿using System.Threading;
+﻿using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
-using NLog;
-using WorkflowExample;
 
 namespace Stateless.Workflow
 {
@@ -12,11 +11,11 @@ namespace Stateless.Workflow
             State = state;
         }
 
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
         public bool HasError { get; set; }
 
         public TState State { get; }
+
+        public string Name => Regex.Replace(GetType().Name, "Activity$", "");
 
         public bool FireActivityCompletedTrigger { get; set; } = true;
 
@@ -24,10 +23,7 @@ namespace Stateless.Workflow
             StateMachine<TState, TTrigger>.Transition transition, 
             CancellationToken token)
         {
-            //Add tracing here
-            Log.Debug($"Starting Activity: State: {transition.Destination}, From State: {transition.Source}, Trigger: {transition.Trigger}");
             await RunImplementationAsync(workflow, transition, token);
-            Log.Debug("Completed Activity");            
         }
 
         protected abstract Task RunImplementationAsync(Workflow<TState, TTrigger> workflow, 

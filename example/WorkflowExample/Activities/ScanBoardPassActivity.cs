@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using NLog;
 using Stateless;
+using Stateless.Workflow;
 using WorkflowExample.Service;
 using WorkflowExample.Workflow;
 

@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using NLog;
-using Stateless;
+using Microsoft.Extensions.Logging;
 using Stateless.Reflection;
-using Stateless.Workflow;
 
-namespace WorkflowExample
+namespace Stateless.Workflow
 {
     public class Workflow<TState, TTrigger>
     {
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
+        private readonly ILogger<Workflow<TState, TTrigger>> _logger;
         internal StateMachine<TState, TTrigger>.TriggerWithParameters<BaseActivity<TState, TTrigger>> CompletedActivityTrigger;
         public IActivityFactory ActivityFactory { get; }
         public TTrigger CompletedTrigger { get; }
@@ -23,17 +21,20 @@ namespace WorkflowExample
         private readonly StateMachine<TState, TTrigger> _stateMachine;
         private readonly IDictionary<TState, StateMachine<TState, TTrigger>.StateConfiguration> _states = new ConcurrentDictionary<TState, StateMachine<TState, TTrigger>.StateConfiguration>();
         private StateMachine<TState, TTrigger>.StateConfiguration _currentStateConfiguration;
+        private readonly Guid _id = Guid.NewGuid();
 
-        public Workflow(TState initialState, IActivityFactory activityFactory, TTrigger completedTrigger)
+        public Workflow(TState initialState, IActivityFactory activityFactory, ILogger<Workflow<TState, TTrigger>> logger, TTrigger completedTrigger)
         {
+            _logger = logger;
+            Log("Creating Workflow <{0},{1}> with ID {2} and initial state {3}", typeof(TState), typeof(TTrigger), _id, initialState);
+
             _stateMachine = new StateMachine<TState, TTrigger>(initialState);
             _currentStateConfiguration = ConfigureState(initialState);
 
-            MappedDiagnosticsLogicalContext.Set("WorkflowState", "Hi");
             ActivityFactory = activityFactory;
             CompletedTrigger = completedTrigger;
             CompletedActivityTrigger = _stateMachine.SetTriggerParameters<BaseActivity<TState, TTrigger>>(completedTrigger);
-            _stateMachine.OnTransitioned(transition => GlobalDiagnosticsContext.Set("WorkflowState", transition.Destination));
+            _stateMachine.OnTransitioned(transition => Log("Workflow {0} moved to state {1}", _id, transition.Destination));
         }
 
         internal async Task FireCompletedActivityAsync(BaseActivity<TState, TTrigger> activity)
@@ -71,11 +72,6 @@ namespace WorkflowExample
             });
         }
 
-        protected virtual void ErrorHandler(object sender, Exception ex, string message)
-        {
-            Log.Error(ex, $"Error Thrown by: {sender}, Message: {message}, Exception: {ex}");
-        }
-
         public void ReportError(object sender, Exception ex, string message)
         {
             ErrorHandler(sender, ex, message);
@@ -87,9 +83,10 @@ namespace WorkflowExample
             {
                 CancellationTokenSource = new CancellationTokenSource();
                 RunningActivity = activity;
-                if (RunningActivity == null) throw new Exception($"Error activating Activity: {activity.GetType()}");
+                if (RunningActivity == null)
+                    throw new Exception($"Error activating activity [{activity.GetType()}]");
 
-                MappedDiagnosticsLogicalContext.Set("WorkflowActivity", $" [{activity.GetType().Name}]");
+                Log($"Workflow {_id} running activity [{activity.Name}]");
                 await RunningActivity.RunAsync(this, transition, CancellationTokenSource.Token);
 
                 //Invoke OnCompletion Trigger
@@ -97,18 +94,18 @@ namespace WorkflowExample
             }
             catch (OperationCanceledException)
             {
-                Log.Info("Activity Canceled");
+                Log("Activity Canceled");
             }
             catch (Exception e)
             {
                 if (RunningActivity != null) RunningActivity.HasError = true;
-                Log.Error(e);
-                ReportError(this, e, $"Error running activity: {GetType()}, in State: {transition.Destination}");
+                LogError(e);
+                ReportError(this, e, $"Error running activity [{activity.Name}] in state [{transition.Destination}]");
             }
             finally
             {
                 RunningActivity = null;
-                MappedDiagnosticsLogicalContext.Set("WorkflowActivity", "");
+                Log($"Workflow {_id} finished activity [{activity.Name}]");
             }
         }
 
@@ -120,7 +117,7 @@ namespace WorkflowExample
 
         public void CancelWorkflow()
         {
-            Log.Info("Canceling Workflow");
+            Log("Canceling Workflow");
             CancellationTokenSource?.Cancel();
         }
 
@@ -215,5 +212,33 @@ namespace WorkflowExample
             }
             return _currentStateConfiguration;
         }
+
+        private void Log(string message, params object[] args)
+        {
+            try
+            {
+                _logger?.LogDebug(message, args);
+            }
+            catch (Exception) { }
+        }
+
+        private void LogError(Exception e)
+        {
+            try
+            {
+                _logger?.LogError(e.ToString());
+            }
+            catch (Exception) { }
+        }
+
+        protected virtual void ErrorHandler(object sender, Exception ex, string message)
+        {
+            try
+            {
+                _logger.LogError(ex, $"Error Thrown by: {sender}, Message: {message}, Exception: {ex}");
+            }
+            catch (Exception) { }
+        }
+
     }
 }

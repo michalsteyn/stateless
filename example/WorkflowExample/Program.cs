@@ -5,58 +5,41 @@ using System.Reflection;
 using System.Threading;
 using Autofac;
 using Caliburn.Micro;
-using NLog;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 using Shields.GraphViz.Components;
 using Shields.GraphViz.Models;
 using Shields.GraphViz.Services;
 using Stateless.Graph;
-using Stateless.Workflow;
 using WorkflowExample.Activities;
 using WorkflowExample.Events;
 using WorkflowExample.Service;
 using WorkflowExample.StateDiagram;
 using WorkflowExample.Workflow;
-using LogManager = NLog.LogManager;
 
 namespace WorkflowExample
 {
     class Program
     {
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
         static void Main()
         {
-            var builder = new ContainerBuilder();
-            builder.RegisterType<TestWorkflow>().InstancePerLifetimeScope();
-            builder.RegisterAssemblyTypes(Assembly.GetExecutingAssembly())
-                .Where(t => t.BaseType == typeof(BaseTestActivity))
-                .AsSelf()
-                .InstancePerLifetimeScope();
-
-            builder.RegisterType<BoardPassScanner>();
-
-            builder.RegisterType<EventAggregator>().AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<ActivityFactory>().SingleInstance();
-
-            var container = builder.Build();
-
-            //Used for DI of Activities
+            var container = BuildIoCContainer();
             var eventBus = container.Resolve<IEventAggregator>();
-
+            var logger = container.Resolve<ILogger<TestWorkflow>>();
             try
             {
                 using (var scope = container.BeginLifetimeScope())
                 {
                     var workflow = scope.Resolve<TestWorkflow>();
-                    CreateGraph(workflow, true);
+                    WriteWorkflowDiagramToFile(workflow, logger, true);
 
-                    Log.Debug("Test Workflow Created");
+                    logger.LogDebug("Test Workflow Created");
                     workflow.FireAndForget(Triggers.Reset);
 
                     string userInput;
                     do
                     {
-                        Log.Info("Enter a User Input: Yes, No, Cancel, [Exit to terminate]");
+                        logger.LogInformation("Enter a User Input: Yes, No, Cancel, [Exit to terminate]");
                         userInput = Console.ReadLine();
                         if (Enum.TryParse(userInput, out UserEvents userEventTrigger))
                         {
@@ -67,34 +50,67 @@ namespace WorkflowExample
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Exception: " + ex.Message);
-                Log.Info("Press any key to continue...");
+                logger.LogError(ex, "Exception: " + ex.Message);
+                logger.LogInformation("Press any key to continue...");
                 Console.ReadKey(true);
             }
         }
 
-        protected static void CreateGraph(TestWorkflow workflow, bool openImage)
+        private static IContainer BuildIoCContainer()
+        {
+            var builder = new ContainerBuilder();
+
+            var logFactory = new LoggerFactory()
+                .AddNLog(new NLogProviderOptions
+                {
+                    CaptureMessageProperties = true,
+                    CaptureMessageTemplates = true
+                });
+
+            var logger = logFactory.CreateLogger<TestWorkflow>();
+            builder.RegisterInstance(logger).As<ILogger<TestWorkflow>>();
+
+            builder.RegisterType<TestWorkflow>().InstancePerLifetimeScope();
+
+            builder.RegisterAssemblyTypes(Assembly.GetExecutingAssembly())
+                .Where(t => t.BaseType == typeof(BaseTestActivity))
+                .AsSelf()
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<BoardPassScanner>();
+            builder.RegisterType<EventAggregator>().AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<ActivityFactory>().SingleInstance();
+
+            return builder.Build();
+        }
+
+        protected static void WriteWorkflowDiagramToFile(TestWorkflow workflow, 
+            ILogger logger, 
+            bool openImage = false,
+            string fileName = "graph",
+            string graphvizPath = @"C:\ProgramData\chocolatey\bin\")
         {
             try
             {
                 var dot = UmlDotGraph.Format(workflow.GetInfo());
-                Graph graph = Graph.Directed.Add(new StringStatement(dot));
-                File.WriteAllText("graph.txt", dot);
+                var graph = Graph.Directed.Add(new StringStatement(dot));
+                File.WriteAllText($"{fileName}.txt", dot);
 
                 //Requires: choco install graphviz.portable
-                var renderer = new Renderer(@"C:\ProgramData\chocolatey\bin\");
-                using (Stream file = File.Create("graph.png"))
+                var renderer = new Renderer(graphvizPath);
+                using (Stream file = File.Create($"{fileName}.png"))
                 {
-                    renderer.RunAsync(graph, file, RendererLayouts.Dot, RendererFormats.Png, CancellationToken.None).GetAwaiter()
+                    renderer.RunAsync(graph, file, RendererLayouts.Dot, RendererFormats.Png, CancellationToken.None)
+                        .GetAwaiter()
                         .GetResult();
                 }
 
                 if (openImage)
-                    Process.Start("explorer", "graph.png");
+                    Process.Start("explorer", $"{fileName}.png");
             }
             catch (Exception e)
             {
-                Log.Error(e, $"Error Creating State Diagram: {e.Message}");
+                logger.LogError(e, $"Error Creating State Diagram: {e.Message}");
             }
         }
     }    
