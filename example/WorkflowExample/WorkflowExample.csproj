@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stateless\Stateless.csproj" />
+    <ProjectReference Include="..\..\Workflow\Workflow.csproj" />
   </ItemGroup>
 
   <ItemGroup>
