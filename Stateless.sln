@@ -40,7 +40,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JsonExample", "example\Json
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowExample", "example\WorkflowExample\WorkflowExample.csproj", "{37040471-6CCD-46A7-86F1-AAFF8AB5C05F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workflow", "Workflow\Workflow.csproj", "{F80E4233-0814-40B7-BF7C-374E10143AAC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stateless.Workflow", "Workflow\Stateless.Workflow.csproj", "{F80E4233-0814-40B7-BF7C-374E10143AAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

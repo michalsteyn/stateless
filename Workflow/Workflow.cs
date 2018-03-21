@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NLog;
 using Stateless;
 using Stateless.Reflection;
+using Stateless.Workflow;
 
 namespace WorkflowExample
 {

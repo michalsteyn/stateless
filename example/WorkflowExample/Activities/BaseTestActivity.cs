@@ -1,4 +1,5 @@
-﻿using WorkflowExample.Workflow;
+﻿using Stateless.Workflow;
+using WorkflowExample.Workflow;
 
 namespace WorkflowExample.Activities
 {

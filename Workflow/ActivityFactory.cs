@@ -1,6 +1,6 @@
 ﻿using Autofac;
 
-namespace WorkflowExample
+namespace Stateless.Workflow
 {    
     //Used for DI of activities into Workflow 
     public interface IActivityFactory

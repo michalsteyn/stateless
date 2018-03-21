@@ -1,4 +1,5 @@
 ﻿using Caliburn.Micro;
+using Stateless.Workflow;
 
 namespace WorkflowExample.Workflow
 {

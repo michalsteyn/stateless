@@ -1,9 +1,9 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using NLog;
-using Stateless;
+using WorkflowExample;
 
-namespace WorkflowExample
+namespace Stateless.Workflow
 {
     public abstract class BaseActivity<TState, TTrigger>
     {

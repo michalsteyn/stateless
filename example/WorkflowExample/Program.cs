@@ -10,6 +10,7 @@ using Shields.GraphViz.Components;
 using Shields.GraphViz.Models;
 using Shields.GraphViz.Services;
 using Stateless.Graph;
+using Stateless.Workflow;
 using WorkflowExample.Activities;
 using WorkflowExample.Events;
 using WorkflowExample.Service;
