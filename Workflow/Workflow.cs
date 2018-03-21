@@ -8,13 +8,13 @@ using Stateless.Reflection;
 
 namespace Stateless.Workflow
 {
-    public class Workflow<TState, TTrigger>
+    public class Workflow<TState, TTrigger, TData> where TData: new()
     {
-        private readonly ILogger<Workflow<TState, TTrigger>> _logger;
-        internal StateMachine<TState, TTrigger>.TriggerWithParameters<BaseActivity<TState, TTrigger>> CompletedActivityTrigger;
+        private readonly ILogger<Workflow<TState, TTrigger, TData>> _logger;
+        internal StateMachine<TState, TTrigger>.TriggerWithParameters<BaseActivity<TState, TTrigger, TData>> CompletedActivityTrigger;
         public IActivityFactory ActivityFactory { get; }
         public TTrigger CompletedTrigger { get; }
-        public BaseActivity<TState, TTrigger> RunningActivity { get; protected set; }
+        public BaseActivity<TState, TTrigger, TData> RunningActivity { get; protected set; }
         public CancellationTokenSource CancellationTokenSource { get; protected set; }
 
         private readonly StateMachine<TState, TTrigger> _stateMachine;
@@ -22,7 +22,7 @@ namespace Stateless.Workflow
         private StateMachine<TState, TTrigger>.StateConfiguration _currentStateConfiguration;
         private readonly Guid _id = Guid.NewGuid();
 
-        public Workflow(TState initialState, IActivityFactory activityFactory, ILogger<Workflow<TState, TTrigger>> logger, TTrigger completedTrigger)
+        public Workflow(TState initialState, IActivityFactory activityFactory, ILogger<Workflow<TState, TTrigger, TData>> logger, TTrigger completedTrigger)
         {
             _logger = logger;
             Log("Creating Workflow of [<{0},{1}>] with ID [{2}] and initial state [{3}]", typeof(TState), typeof(TTrigger), _id, initialState);
@@ -32,11 +32,11 @@ namespace Stateless.Workflow
 
             ActivityFactory = activityFactory;
             CompletedTrigger = completedTrigger;
-            CompletedActivityTrigger = _stateMachine.SetTriggerParameters<BaseActivity<TState, TTrigger>>(completedTrigger);
+            CompletedActivityTrigger = _stateMachine.SetTriggerParameters<BaseActivity<TState, TTrigger, TData>>(completedTrigger);
             _stateMachine.OnTransitioned(transition => Log("Workflow [{0}] moved to state [{1}]", _id, transition.Destination));
         }
 
-        internal async Task FireCompletedActivityAsync(BaseActivity<TState, TTrigger> activity)
+        internal async Task FireCompletedActivityAsync(BaseActivity<TState, TTrigger, TData> activity)
         {
             await _stateMachine.FireAsync(CompletedActivityTrigger, activity);
         }
@@ -76,7 +76,7 @@ namespace Stateless.Workflow
             ErrorHandler(sender, ex, message);
         }
 
-        public async Task RunActivity(BaseActivity<TState, TTrigger> activity, StateMachine<TState, TTrigger>.Transition transition)
+        public async Task RunActivity(BaseActivity<TState, TTrigger, TData> activity, StateMachine<TState, TTrigger>.Transition transition)
         {
             try
             {
@@ -110,7 +110,7 @@ namespace Stateless.Workflow
 
         public async Task RunActivity<TActivity>(StateMachine<TState,TTrigger>.Transition transition)
         {
-            var activity = ActivityFactory.GetActivity<TActivity>() as BaseActivity<TState, TTrigger>;
+            var activity = ActivityFactory.GetActivity<TActivity>() as BaseActivity<TState, TTrigger, TData>;
             await RunActivity(activity, transition);
         }
 
@@ -120,7 +120,7 @@ namespace Stateless.Workflow
             CancellationTokenSource?.Cancel();
         }
 
-        public Workflow<TState, TTrigger> Configure(BaseActivity<TState, TTrigger> activity, string description = null)
+        public Workflow<TState, TTrigger, TData> Configure(BaseActivity<TState, TTrigger, TData> activity, string description = null)
         {
             ConfigureState(activity.State)
                 .OnEntryAsync(async transition => await RunActivity(activity, transition));
@@ -128,7 +128,7 @@ namespace Stateless.Workflow
             return this;
         }
 
-        public Workflow<TState, TTrigger> Configure<TActivity>(string description = null) where TActivity: BaseActivity<TState, TTrigger>
+        public Workflow<TState, TTrigger, TData> Configure<TActivity>(string description = null) where TActivity: BaseActivity<TState, TTrigger, TData>
         {
             var activity = ActivityFactory.GetActivity<TActivity>();
 
@@ -139,10 +139,10 @@ namespace Stateless.Workflow
             return this;
         }
 
-        public Workflow<TState, TTrigger> When<TFrom, TTo>(Func<TFrom, bool> condition,
+        public Workflow<TState, TTrigger, TData> When<TFrom, TTo>(Func<TFrom, bool> condition,
             string description = null) 
-            where TFrom : BaseActivity<TState, TTrigger>
-            where TTo: BaseActivity<TState, TTrigger>
+            where TFrom : BaseActivity<TState, TTrigger, TData>
+            where TTo: BaseActivity<TState, TTrigger, TData>
         {
             var newState = ActivityFactory.GetActivity<TTo>().State;
 
@@ -155,7 +155,7 @@ namespace Stateless.Workflow
             return this;
         }
 
-        public Workflow<TState, TTrigger> Then<TActivity>(string description = null) where TActivity: BaseActivity<TState, TTrigger>
+        public Workflow<TState, TTrigger, TData> Then<TActivity>(string description = null) where TActivity: BaseActivity<TState, TTrigger, TData>
         {
             var newState = ActivityFactory.GetActivity<TActivity>().State;
             _currentStateConfiguration.PermitIf(CompletedActivityTrigger, newState, activity => true, description);
@@ -170,28 +170,28 @@ namespace Stateless.Workflow
 
         public StateMachineInfo GetInfo() => _stateMachine.GetInfo();
 
-        public Workflow<TState, TTrigger> On(TTrigger trigger, TState newState)
+        public Workflow<TState, TTrigger, TData> On(TTrigger trigger, TState newState)
         {
             _currentStateConfiguration.PermitIf(trigger, newState);
             return this;
         }
 
-        public Workflow<TState, TTrigger> On<TArg, TActivity>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, 
-            Func<TArg, bool> guard, string guardDescription = null) where TActivity: BaseActivity<TState, TTrigger>
+        public Workflow<TState, TTrigger, TData> On<TArg, TActivity>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, 
+            Func<TArg, bool> guard, string guardDescription = null) where TActivity: BaseActivity<TState, TTrigger, TData>
         {
             var newState = ActivityFactory.GetActivity<TActivity>().State;
             _currentStateConfiguration.PermitIf(trigger, newState, guard, guardDescription);
             return this;
         }
 
-        public Workflow<TState, TTrigger> RepeatOn<TArg>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, Func<TArg, bool> guard,
+        public Workflow<TState, TTrigger, TData> RepeatOn<TArg>(StateMachine<TState, TTrigger>.TriggerWithParameters<TArg> trigger, Func<TArg, bool> guard,
             string guardDescription = null)
         {
             _currentStateConfiguration.PermitReentryIf(trigger, guard, guardDescription);
             return this;
         }
 
-        public Workflow<TState, TTrigger> RepeatOn(TTrigger trigger)
+        public Workflow<TState, TTrigger, TData> RepeatOn(TTrigger trigger)
         {
             _currentStateConfiguration.PermitReentryIf(trigger);
             return this;

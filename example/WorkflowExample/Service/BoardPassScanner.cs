@@ -31,7 +31,7 @@ namespace WorkflowExample.Service
             try
             {
                 _internalCancellationTokenSource = new CancellationTokenSource();
-                await Task.Delay(5000, _internalCancellationTokenSource.Token);
+                await Task.Delay(1000, _internalCancellationTokenSource.Token);
                 return "1234";
             }
             catch (OperationCanceledException)

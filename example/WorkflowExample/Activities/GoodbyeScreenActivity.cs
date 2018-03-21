@@ -11,7 +11,7 @@ namespace WorkflowExample.Activities
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        protected override async Task RunImplementationAsync(Workflow<States, Triggers> workflow,
+        protected override async Task RunImplementationAsync(Workflow<States, Triggers, DataContext> workflow,
             StateMachine<States, Triggers>.Transition transition, CancellationToken token)
         {
             Log.Info("Have a good day");

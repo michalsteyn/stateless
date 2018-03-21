@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Stateless.Workflow
 {
-    public abstract class BaseActivity<TState, TTrigger>
+    public abstract class BaseActivity<TState, TTrigger, TData> where TData : new()
     {
         protected BaseActivity(TState state)
         {
@@ -19,14 +19,14 @@ namespace Stateless.Workflow
 
         public bool FireActivityCompletedTrigger { get; set; } = true;
 
-        public async Task RunAsync(Workflow<TState, TTrigger> workflow, 
+        public async Task RunAsync(Workflow<TState, TTrigger, TData> workflow, 
             StateMachine<TState, TTrigger>.Transition transition, 
             CancellationToken token)
         {
             await RunImplementationAsync(workflow, transition, token);
         }
 
-        protected abstract Task RunImplementationAsync(Workflow<TState, TTrigger> workflow, 
+        protected abstract Task RunImplementationAsync(Workflow<TState, TTrigger, TData> workflow, 
             StateMachine<TState, TTrigger>.Transition transition, 
             CancellationToken token);
     }
