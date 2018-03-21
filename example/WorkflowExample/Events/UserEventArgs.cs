@@ -1,5 +1,4 @@
-﻿
-namespace WorkflowExample.Events
+﻿namespace WorkflowExample.Events
 {
     public enum UserEvents
     {
