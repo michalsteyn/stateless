@@ -1,8 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using NLog;
-using Stateless;
-using Stateless.Workflow;
 using WorkflowExample.Workflow;
 
 namespace WorkflowExample.Activities
@@ -11,12 +9,11 @@ namespace WorkflowExample.Activities
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        protected override async Task RunImplementationAsync(Workflow<States, Triggers, DataContext> workflow,
-            StateMachine<States, Triggers>.Transition transition, CancellationToken token)
+        protected override async Task RunImplementationAsync(CancellationToken token)
         {
             Log.Info("International Traveler Detected, press Yes to complete booking");
         }
 
-        public StartIntWorkflowActivity() : base(States.StartIntWorkFlow) {  }
+        public StartIntWorkflowActivity(TestWorkflow workflow) : base(workflow, States.StartIntWorkFlow) {  }
     }
 }

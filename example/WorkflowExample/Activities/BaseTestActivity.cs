@@ -5,6 +5,6 @@ namespace WorkflowExample.Activities
 {
     public abstract class BaseTestActivity : BaseActivity<States, Triggers, DataContext>
     {
-        protected BaseTestActivity(States state) : base(state) {  }
+        protected BaseTestActivity(Workflow<States, Triggers, DataContext> workflow, States state) : base(workflow, state) {  }
     }
 }

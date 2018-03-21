@@ -8,30 +8,30 @@ namespace WorkflowExample.Workflow
         //This could be split into separate partial classes
         protected void InitSteps()
         {
-            Configure<WelcomeScreenActivity>()
+            Configure(new WelcomeScreenActivity(this))
                 .RepeatOn(Triggers.Reset)
                 .RepeatOn(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Invalid")
-                .On<UserEvents, ScanBoardPassActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, "Yes");
+                .On(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, () => new ScanBoardPassActivity(this, _eventAggregator), "Yes");
 
-            Configure<ScanBoardPassActivity>()
-                .When<ScanBoardPassActivity, StartDomesticWorkflowActivity>(scan => scan.IsDomestic, "Domestic Passenger")
-                .When<ScanBoardPassActivity, StartIntWorkflowActivity>(scan => !scan.IsDomestic, "International Passenger")
-                .When<ScanBoardPassActivity, GoodbyeScreenActivity>(scan => !scan.HasValidBoardPass, "Invalid BoardPass")
-                .On<UserEvents, GoodbyeScreenActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Cancel, "Cancel");
+            Configure(new ScanBoardPassActivity(this, _eventAggregator))
+                .When(scan => scan.IsDomestic, () => new StartDomesticWorkflowActivity(this), "Domestic Passenger")
+                .When(scan => !scan.IsDomestic, () => new StartIntWorkflowActivity(this), "International Passenger")
+                .When(scan => !scan.HasValidBoardPass, () => new GoodbyeScreenActivity(this), "Invalid BoardPass")
+                .On(_userEventsTrigger, userEvent => userEvent == UserEvents.Cancel, () => new GoodbyeScreenActivity(this), "Cancel");
 
-            Configure<StartIntWorkflowActivity>()
-                .On<UserEvents, CompletingBookingActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, "Yes")
-                .On<UserEvents, GoodbyeScreenActivity>(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Cancel");
+            Configure(new StartIntWorkflowActivity(this))
+                .On(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, () => new CompletingBookingActivity(this), "Yes")
+                .On(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, () => new GoodbyeScreenActivity(this), "Cancel");
 
-            Configure<StartDomesticWorkflowActivity>()
-                .On<UserEvents, CompletingBookingActivity>(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, "Yes")
-                .On<UserEvents, GoodbyeScreenActivity>(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, "Cancel");
+            Configure(new StartDomesticWorkflowActivity(this))
+                .On(_userEventsTrigger, userEvent => userEvent == UserEvents.Yes, () => new CompletingBookingActivity(this), "Yes")
+                .On(_userEventsTrigger, userEvent => userEvent != UserEvents.Yes, () => new GoodbyeScreenActivity(this), "Cancel");
 
-            Configure<CompletingBookingActivity>()
-                .Then<GoodbyeScreenActivity>();
+            Configure(new CompletingBookingActivity(this))
+                .Then(() => new GoodbyeScreenActivity(this));
 
-            Configure<GoodbyeScreenActivity>()
-                .Then<WelcomeScreenActivity>();
+            Configure(new GoodbyeScreenActivity(this))
+                .Then(() => new WelcomeScreenActivity(this));
         }
     }
 }

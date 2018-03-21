@@ -79,7 +79,6 @@ namespace WorkflowExample
 
             builder.RegisterType<BoardPassScanner>();
             builder.RegisterType<EventAggregator>().AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<ActivityFactory>().SingleInstance();
 
             return builder.Build();
         }

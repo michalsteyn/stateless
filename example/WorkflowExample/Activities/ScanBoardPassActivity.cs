@@ -1,40 +1,38 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Caliburn.Micro;
 using NLog;
-using Stateless;
-using Stateless.Workflow;
 using WorkflowExample.Service;
 using WorkflowExample.Workflow;
+using LogManager = NLog.LogManager;
 
 namespace WorkflowExample.Activities
 {
     public class ScanBoardPassActivity : BaseTestActivity
     {
-        private readonly BoardPassScanner _boardPassScanner;
+        private readonly IEventAggregator _eventAggregator;
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        private readonly Random _rand = new Random(DateTime.Now.GetHashCode());
 
-        public string BoardPassData { get; set; }
-
-        public bool HasValidBoardPass => !string.IsNullOrEmpty(BoardPassData);
-
-        public bool IsDomestic { get; set; }
-
-        public ScanBoardPassActivity(BoardPassScanner boardPassScanner) : base(States.ScanningBoardPass)
+        public ScanBoardPassActivity(TestWorkflow workflow, IEventAggregator eventAggregator) : base(workflow, States.ScanningBoardPass)
         {
-            _boardPassScanner = boardPassScanner;
+            _eventAggregator = eventAggregator;
         }        
 
-        protected override async Task RunImplementationAsync(Workflow<States, Triggers, DataContext> workflow,
-            StateMachine<States, Triggers>.Transition transition, CancellationToken token)
+        protected override async Task RunImplementationAsync(CancellationToken token)
         {
             Log.Info("Going to Scan BoardPass... waiting...");
 
             //This may be a Service, or an embedded WF. In this Example, the BoardPassScanner will also subscribe to the UserEvents.Cancel
-            BoardPassData = await _boardPassScanner.ScanBoardPass();
-            if(!HasValidBoardPass)
+            Data.BoardPassData = await new BoardPassScanner(_eventAggregator).ScanBoardPass();
+            if (!Data.HasValidBoardPass)
+            {
                 Log.Warn("Failed to read BoardPass");
-            IsDomestic = true;
-            Log.Info($"Scanned BoardPass: {BoardPassData}");
+            }
+
+            Data.IsDomestic = _rand.NextDouble() < 0.5;
+            Log.Info($"Scanned BoardPass: {Data.BoardPassData}");
         }
     }
 }

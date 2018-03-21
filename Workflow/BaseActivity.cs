@@ -6,10 +6,13 @@ namespace Stateless.Workflow
 {
     public abstract class BaseActivity<TState, TTrigger, TData> where TData : new()
     {
-        protected BaseActivity(TState state)
+        protected BaseActivity(Workflow<TState, TTrigger, TData> workflow, TState state)
         {
+            Data = workflow.Data;
             State = state;
         }
+
+        public TData Data { get; }
 
         public bool HasError { get; set; }
 
@@ -19,15 +22,11 @@ namespace Stateless.Workflow
 
         public bool FireActivityCompletedTrigger { get; set; } = true;
 
-        public async Task RunAsync(Workflow<TState, TTrigger, TData> workflow, 
-            StateMachine<TState, TTrigger>.Transition transition, 
-            CancellationToken token)
+        public async Task RunAsync(CancellationToken token)
         {
-            await RunImplementationAsync(workflow, transition, token);
+            await RunImplementationAsync(token);
         }
 
-        protected abstract Task RunImplementationAsync(Workflow<TState, TTrigger, TData> workflow, 
-            StateMachine<TState, TTrigger>.Transition transition, 
-            CancellationToken token);
+        protected abstract Task RunImplementationAsync(CancellationToken token);
     }
 }
