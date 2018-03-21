@@ -20,8 +20,9 @@ namespace Stateless.Workflow
 
         public bool FireActivityCompletedTrigger { get; set; } = true;
 
-        public async Task RunAsync(Workflow<TState, TTrigger> workflow,
-            StateMachine<TState, TTrigger>.Transition transition, CancellationToken token)
+        public async Task RunAsync(Workflow<TState, TTrigger> workflow, 
+            StateMachine<TState, TTrigger>.Transition transition, 
+            CancellationToken token)
         {
             //Add tracing here
             Log.Debug($"Starting Activity: State: {transition.Destination}, From State: {transition.Source}, Trigger: {transition.Trigger}");
@@ -29,7 +30,8 @@ namespace Stateless.Workflow
             Log.Debug("Completed Activity");            
         }
 
-        protected abstract Task RunImplementationAsync(Workflow<TState, TTrigger> workflow,
-            StateMachine<TState, TTrigger>.Transition transition, CancellationToken token);
+        protected abstract Task RunImplementationAsync(Workflow<TState, TTrigger> workflow, 
+            StateMachine<TState, TTrigger>.Transition transition, 
+            CancellationToken token);
     }
 }
